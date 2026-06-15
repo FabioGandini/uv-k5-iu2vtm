@@ -33,6 +33,9 @@
 #include "ui/helper.h"
 #include "ui/ui.h"
 #include "ui/status.h"
+#ifdef ENABLE_MESSENGER
+    #include "app/messenger.h"
+#endif
 
 #ifdef ENABLE_FEAT_F4HWN_RX_TX_TIMER
 #ifndef ENABLE_FEAT_F4HWN_DEBUG
@@ -83,6 +86,15 @@ void UI_DisplayStatus()
 #endif
 
     unsigned int x1 = x;
+
+#ifdef ENABLE_MESSENGER
+    if (hasNewMessage > 0) { // New Message indicator
+        if (hasNewMessage == 1)
+            memcpy(line + x, BITMAP_NEWMSG, sizeof(BITMAP_NEWMSG));
+        x1 = x + sizeof(BITMAP_NEWMSG);
+    }
+    x += sizeof(BITMAP_NEWMSG);
+#endif
 
 #ifdef ENABLE_DTMF_CALLING
     if (gSetting_KILLED) {

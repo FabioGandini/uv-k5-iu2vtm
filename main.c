@@ -42,6 +42,9 @@
 
 #include "app/app.h"
 #include "app/dtmf.h"
+#ifdef ENABLE_MESSENGER
+    #include "app/messenger.h"
+#endif
 #include "bsp/dp32g030/gpio.h"
 #include "bsp/dp32g030/syscon.h"
 
@@ -125,6 +128,10 @@ void Main(void)
         BOARD_ADC_GetBatteryInfo(&gBatteryVoltages[i], &gBatteryCurrent);
 
     BATTERY_GetReadings(false);
+
+#ifdef ENABLE_MESSENGER
+    MSG_Init();
+#endif
 
 #ifdef ENABLE_AM_FIX
     AM_fix_init();

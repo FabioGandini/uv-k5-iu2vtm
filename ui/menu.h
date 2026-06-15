@@ -158,7 +158,16 @@ enum
     MENU_F2SHRT,
     MENU_F2LONG,
     MENU_MLONG,
-    MENU_BATTYP
+    MENU_BATTYP,
+#ifdef ENABLE_ENCRYPTION
+    MENU_ENC_KEY,
+    MENU_MSG_ENC,
+#endif
+#ifdef ENABLE_MESSENGER
+    MENU_MSG_RX,
+    MENU_MSG_ACK,
+    MENU_MSG_MODULATION,
+#endif
 };
 
 extern const uint8_t FIRST_HIDDEN_MENU_ITEM;
@@ -212,6 +221,10 @@ extern const char        gSubMenu_BATTYP[3][9];
 
 #ifndef ENABLE_FEAT_F4HWN
     extern const char        gSubMenu_SCRAMBLER[11][7];
+#endif
+
+#ifdef ENABLE_MESSENGER
+    extern const char        gSubMenu_MSG_MODULATION[3][10];
 #endif
 
 typedef struct {char* name; uint8_t id;} t_sidefunction;

@@ -24,6 +24,9 @@
 #include <helper/battery.h>
 #include "radio.h"
 #include <driver/backlight.h>
+#ifdef ENABLE_MESSENGER
+    #include "app/messenger.h"
+#endif
 
 enum POWER_OnDisplayMode_t {
 #ifdef ENABLE_FEAT_F4HWN
@@ -284,6 +287,12 @@ typedef struct {
 
     VFO_Info_t            VfoInfo[2];
     uint32_t              POWER_ON_PASSWORD;
+#ifdef ENABLE_ENCRYPTION
+    char                  ENC_KEY[16];
+#endif
+#ifdef ENABLE_MESSENGER
+    MessengerConfig       MESSENGER_CONFIG;
+#endif
     uint16_t              VOX1_THRESHOLD;
     uint16_t              VOX0_THRESHOLD;
 
@@ -329,5 +338,8 @@ void SETTINGS_WriteBuildOptions(void);
 #endif
 #ifdef ENABLE_FEAT_F4HWN
     void SETTINGS_ResetTxLock(void);
+#endif
+#ifdef ENABLE_ENCRYPTION
+    void SETTINGS_SaveEncryptionKey(void);
 #endif
 #endif

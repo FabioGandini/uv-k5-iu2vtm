@@ -38,6 +38,9 @@
 #include "inputbox.h"
 #include "menu.h"
 #include "ui.h"
+#ifdef ENABLE_ENCRYPTION
+    #include "../helper/crypto.h"
+#endif
 
 
 const t_menu_item MenuList[] =
@@ -136,6 +139,15 @@ const t_menu_item MenuList[] =
     {"BatVol",      MENU_VOL           }, // was "VOL"
 #endif
     {"RxMode",      MENU_TDR           },
+#ifdef ENABLE_ENCRYPTION
+    {"EncKey",      MENU_ENC_KEY       }, // encryption key
+    {"MsgEnc",      MENU_MSG_ENC       }, // messenger encrypt outgoing messages
+#endif
+#ifdef ENABLE_MESSENGER
+    {"MsgRx",       MENU_MSG_RX        }, // messenger rx
+    {"MsgAck",      MENU_MSG_ACK       }, // messenger respond ACK
+    {"MsgMod",      MENU_MSG_MODULATION}, // messenger modulation
+#endif
     {"Sql",         MENU_SQL           },
 #ifdef ENABLE_FEAT_F4HWN
     {"SetPwr",      MENU_SET_PWR       },
@@ -218,6 +230,15 @@ const char gSubMenu_OFF_ON[][4] =
     "OFF",
     "ON"
 };
+
+#ifdef ENABLE_MESSENGER
+const char gSubMenu_MSG_MODULATION[][10] =
+{
+    "FSK 450",
+    "FSK 700",
+    "AFSK 1.2K"
+};
+#endif
 
 const char gSubMenu_NA[4] =
 {
@@ -795,6 +816,13 @@ void UI_DisplayMenu(void)
         #ifdef ENABLE_NOAA
             case MENU_NOAA_S:
         #endif
+        #ifdef ENABLE_ENCRYPTION
+            case MENU_MSG_ENC:
+        #endif
+        #ifdef ENABLE_MESSENGER
+            case MENU_MSG_RX:
+            case MENU_MSG_ACK:
+        #endif
 #ifndef ENABLE_FEAT_F4HWN
         case MENU_350TX:
         case MENU_200TX:
@@ -1168,8 +1196,46 @@ void UI_DisplayMenu(void)
         #ifdef ENABLE_FEAT_F4HWN_RESCUE_OPS
             case MENU_SET_KEY:
                 strcpy(String, gSubMenu_SET_KEY[gSubMenuSelection]);
-                break;                
+                break;
         #endif
+#endif
+
+#ifdef ENABLE_ENCRYPTION
+        case MENU_ENC_KEY:
+        {
+            if (!gIsInSubMenu)
+            {   // show placeholder in main menu
+                strcpy(String, "****");
+                UI_PrintString(String, menu_item_x1, menu_item_x2, 2, 8);
+            }
+            else
+            {   // show the key being edited
+                if (edit_index != -1 || gAskForConfirmation) {
+                    UI_PrintString(edit, (menu_item_x1 - 2), 0, 2, 8);
+                    // show the cursor
+                    if (edit_index < 10)
+                        UI_PrintString("^", (menu_item_x1 - 2) + (8 * edit_index), 0, 4, 8);
+                }
+                else {
+                    strcpy(String, "hashed value");
+                    UI_PrintStringSmallNormal(String, 20, 0, 5);
+
+                    memset(String, 0, sizeof(String));
+
+                    CRYPTO_DisplayHash(gEeprom.ENC_KEY, String, sizeof(gEeprom.ENC_KEY));
+                    UI_PrintString(String, (menu_item_x1 - 2), 0, 2, 8);
+                }
+            }
+
+            already_printed = true;
+            break;
+        }
+#endif
+
+#ifdef ENABLE_MESSENGER
+        case MENU_MSG_MODULATION:
+            strcpy(String, gSubMenu_MSG_MODULATION[gSubMenuSelection]);
+            break;
 #endif
 
     }
@@ -1333,6 +1399,9 @@ void UI_DisplayMenu(void)
 
     if ((UI_MENU_GetCurrentMenuId() == MENU_RESET    ||
          UI_MENU_GetCurrentMenuId() == MENU_MEM_CH   ||
+#ifdef ENABLE_ENCRYPTION
+         UI_MENU_GetCurrentMenuId() == MENU_ENC_KEY  ||
+#endif
          UI_MENU_GetCurrentMenuId() == MENU_MEM_NAME ||
          UI_MENU_GetCurrentMenuId() == MENU_DEL_CH) && gAskForConfirmation)
     {   // display confirmation

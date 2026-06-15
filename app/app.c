@@ -36,6 +36,9 @@
 #include "app/generic.h"
 #include "app/main.h"
 #include "app/menu.h"
+#ifdef ENABLE_MESSENGER
+    #include "app/messenger.h"
+#endif
 #include "app/scanner.h"
 #ifdef ENABLE_UART
     #include "app/uart.h"
@@ -61,6 +64,9 @@
 #include "frequencies.h"
 #include "functions.h"
 #include "helper/battery.h"
+#ifdef ENABLE_ENCRYPTION
+    #include "helper/crypto.h"
+#endif
 #include "misc.h"
 #include "radio.h"
 #include "settings.h"
@@ -83,6 +89,11 @@ static bool flagSaveVfo;
 static bool flagSaveSettings;
 static bool flagSaveChannel;
 
+#ifdef ENABLE_MESSENGER_NOTIFICATION
+    bool gPlayMSGRing = false;
+    uint8_t gPlayMSGRingCount = 0;
+#endif
+
 static void ProcessKey(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld);
 
 
@@ -97,6 +108,10 @@ void (*ProcessKeysFunctions[])(KEY_Code_t Key, bool bKeyPressed, bool bKeyHeld) 
 
 #ifdef ENABLE_AIRCOPY
     [DISPLAY_AIRCOPY] = &AIRCOPY_ProcessKeys,
+#endif
+
+#ifdef ENABLE_MESSENGER
+    [DISPLAY_MSG] = &MSG_ProcessKeys,
 #endif
 };
 
@@ -798,6 +813,10 @@ static void CheckRadioInterrupts(void)
 
             AIRCOPY_StorePacket();
         }
+#endif
+
+#ifdef ENABLE_MESSENGER
+        MSG_StorePacket(interrupts.__raw);
 #endif
     }
 }
@@ -1533,6 +1552,34 @@ void APP_TimeSlice500ms(void)
 {
     gNextTimeslice_500ms = false;
     bool exit_menu = false;
+
+    #ifdef ENABLE_MESSENGER_NOTIFICATION
+        if (gPlayMSGRing) {
+            gPlayMSGRingCount = 5;
+            gPlayMSGRing = false;
+        }
+        if (gPlayMSGRingCount > 0) {
+            AUDIO_PlayBeep(BEEP_880HZ_60MS_DOUBLE_BEEP);
+            gPlayMSGRingCount--;
+        }
+    #endif
+
+    #ifdef ENABLE_MESSENGER
+        if (hasNewMessage > 0) {
+            if (hasNewMessage == 1) {
+                hasNewMessage = 2;
+            } else if (hasNewMessage == 2) {
+                hasNewMessage = 1;
+            }
+        }
+    #endif
+
+    #ifdef ENABLE_ENCRYPTION
+        if(gRecalculateEncKey){
+            CRYPTO_Generate256BitKey(gEeprom.ENC_KEY, gEncryptionKey, sizeof(gEeprom.ENC_KEY));
+            gRecalculateEncKey = false;
+        }
+    #endif
 
     // Skipped authentic device check
 

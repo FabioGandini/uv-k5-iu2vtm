@@ -26,6 +26,9 @@
 #include "misc.h"
 #include "settings.h"
 #include "ui/menu.h"
+#ifdef ENABLE_ENCRYPTION
+    #include "helper/crypto.h"
+#endif
 
 #ifdef ENABLE_FEAT_F4HWN_RESET_CHANNEL
 static const uint32_t gDefaultFrequencyTable[] =
@@ -167,6 +170,9 @@ void SETTINGS_InitEEPROM(void)
             gEeprom.S0_LEVEL = 130;
             gEeprom.S9_LEVEL = 76;
         }
+    #endif
+    #ifdef ENABLE_MESSENGER
+        gEeprom.MESSENGER_CONFIG.__val = Data[3];
     #endif
 
     // 0EA8..0EAF
@@ -339,6 +345,11 @@ void SETTINGS_InitEEPROM(void)
                 }
             }
         #endif
+
+    #ifdef ENABLE_ENCRYPTION
+        // 0F30..0F3F
+        EEPROM_ReadBuffer(0x0F30, gEeprom.ENC_KEY, sizeof(gEeprom.ENC_KEY));
+    #endif
 
     #ifdef ENABLE_FEAT_F4HWN
         // 1FF0..0x1FF7
@@ -689,6 +700,9 @@ void SETTINGS_SaveSettings(void)
     State[1] = gEeprom.S0_LEVEL;
     State[2] = gEeprom.S9_LEVEL;
 #endif
+#ifdef ENABLE_MESSENGER
+    State[3] = gEeprom.MESSENGER_CONFIG.__val;
+#endif
     EEPROM_WriteBuffer(0x0EA0, State);
 
 
@@ -825,7 +839,20 @@ void SETTINGS_SaveSettings(void)
 #ifdef ENABLE_FEAT_F4HWN_VOL
     SETTINGS_WriteCurrentVol();
 #endif
+
+#ifdef ENABLE_ENCRYPTION
+    SETTINGS_SaveEncryptionKey();
+#endif
 }
+
+#ifdef ENABLE_ENCRYPTION
+void SETTINGS_SaveEncryptionKey(void)
+{
+    EEPROM_WriteBuffer(0x0F30, gEeprom.ENC_KEY);
+    EEPROM_WriteBuffer(0x0F38, gEeprom.ENC_KEY + 8);
+    gRecalculateEncKey = true;
+}
+#endif
 
 void SETTINGS_SaveChannel(uint8_t Channel, uint8_t VFO, const VFO_Info_t *pVFO, uint8_t Mode)
 {

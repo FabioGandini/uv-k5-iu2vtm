@@ -36,6 +36,9 @@
 #include "radio.h"
 #include "settings.h"
 #include "ui/menu.h"
+#ifdef ENABLE_MESSENGER
+    #include "app/messenger.h"
+#endif
 
 VFO_Info_t    *gTxVfo;
 VFO_Info_t    *gRxVfo;
@@ -866,6 +869,15 @@ void RADIO_SetupRegisters(bool switchToForeground)
     RADIO_SetupAGC(gRxVfo->Modulation == MODULATION_AM, false);
 
     // enable/disable BK4819 selected interrupts
+
+    #ifdef ENABLE_MESSENGER
+        if (gEeprom.MESSENGER_CONFIG.data.receive)
+        {
+            MSG_EnableRX(true);
+            InterruptMask |= BK4819_REG_3F_FSK_RX_SYNC | BK4819_REG_3F_FSK_RX_FINISHED | BK4819_REG_3F_FSK_FIFO_ALMOST_FULL | BK4819_REG_3F_FSK_TX_FINISHED;
+        }
+    #endif
+
     BK4819_WriteRegister(BK4819_REG_3F, InterruptMask);
 
     FUNCTION_Init();
@@ -1068,6 +1080,11 @@ void RADIO_SetVfoState(VfoState_t State)
 
     gVFOStateResumeCountdown_500ms = (State == VFO_STATE_NORMAL) ? 0 : vfo_state_resume_countdown_500ms;
     gUpdateDisplay = true;
+}
+
+VfoState_t RADIO_GetVfoState(void)
+{
+    return VfoState[(gEeprom.CROSS_BAND_RX_TX == CROSS_BAND_OFF) ? gEeprom.RX_VFO : gEeprom.TX_VFO];
 }
 
 
