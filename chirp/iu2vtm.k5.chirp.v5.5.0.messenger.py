@@ -1060,10 +1060,13 @@ class IU2VTMRadioK5(chirp_common.CloneModeRadio):
     upload_calibration = False
 
     def _get_bands(self):
-        is_wide = self._memobj.BUILD_OPTIONS.ENABLE_WIDE_RX \
-            if self._memobj is not None else True
-        bands = BANDS_WIDE if is_wide else BANDS_STANDARD
-        return bands
+        # This iu2vtm firmware is always built with ENABLE_WIDE_RX, and we want
+        # channel copy/paste from the K1 (which uses the wide range, e.g. the
+        # 73-79 MHz low-VHF channels) to succeed without "frequency not in
+        # supported range" rejections. So always expose the wide bands,
+        # regardless of the ENABLE_WIDE_RX bit read back from the radio EEPROM
+        # (which can be 0 if an older firmware wrote the build-options bitmap).
+        return BANDS_WIDE
 
     def _find_band(self, hz):
         mhz = hz/1000000.0
